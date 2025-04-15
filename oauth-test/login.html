@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Login Test</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 2rem;
+      text-align: center;
+    }
+
+    button {
+      padding: 10px 20px;
+      font-size: 16px;
+      cursor: pointer;
+      background-color: #4285f4;
+      color: white;
+      border: none;
+      border-radius: 5px;
+    }
+
+    .token-container {
+      margin-top: 2rem;
+      word-break: break-all;
+    }
+  </style>
+</head>
+<body>
+
+  <h2>Login with Google</h2>
+
+  <a href="http://localhost:3000/auth/google">
+    <button>Continue with Google</button>
+  </a>
+
+  <div class="token-container" id="output"></div>
+
+  <script>
+    const params = new URLSearchParams(window.location.search);
+    const token = params.get('token');
+    const name = params.get('name');
+
+    if (token) {
+      const output = document.getElementById('output');
+      output.innerHTML = `
+        <p><strong>Welcome, ${name}!</strong></p>
+        <p><strong>Your token:</strong></p>
+        <code>${token}</code>
+      `;
+    }
+  </script>
+
+</body>
+</html>
+
