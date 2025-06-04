@@ -9,6 +9,7 @@ const {
   sendInvites,
   revokeInvite,
   declineInvite,
+  viewInvite
 } = require("../controllers/inviteController");
 const authenticateUser = require("../middlewares/authMiddleware");
 const upload = require('../middlewares/multer')
@@ -19,6 +20,7 @@ router.get("/event/:eventId/details", getEventDetails);
 router.post("/send-invite/", sendInvites);
 router.post('/resend-invite',  resendInvite);
 router.post('/revoke-invite',  revokeInvite);
+router.get("/invite/view/:token", viewInvite)
 
 router.get("/invite/accept/:token", acceptInvite);
 router.get("/invite/decline/:token", declineInvite);

@@ -1,13 +1,17 @@
 const cron = require('node-cron');
 const Invite = require('../models/inviteModel');
 
-// Run every day at midnight
-cron.schedule('0 0 * * *', async () => {
+// Shared cleanup function
+const runInviteCleanup = async (label = 'Scheduled') => {
   try {
+    const yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 1);
+    yesterday.setHours(0, 0, 0, 0); // Start of yesterday
+    
     const now = new Date();
-
+    
     const expiredInvites = await Invite.find({
-      expiresAt: { $lt: now },
+      expiresAt: { $gte: yesterday, $lt: now },
       revoked: false
     });
 
@@ -16,8 +20,16 @@ cron.schedule('0 0 * * *', async () => {
       await invite.save();
     }
 
-    console.log(`[${new Date().toISOString()}] ✅ Invite cleanup done. Revoked ${expiredInvites.length} invites.`);
+    console.log(`[${new Date().toISOString()}] ✅ ${label} invite cleanup done. Revoked ${expiredInvites.length} invites.`);
   } catch (err) {
-    console.error(`[${new Date().toISOString()}] ❌ Invite cleanup failed:`, err.message);
+    console.error(`[${new Date().toISOString()}] ❌ ${label} invite cleanup failed:`, err.message);
   }
-});
+};
+
+// Run cleanup once on server start
+runInviteCleanup('Startup');
+
+// Schedule daily cleanup at midnight
+cron.schedule('0 0 * * *', () => runInviteCleanup('Scheduled'));
+
+module.exports = runInviteCleanup;

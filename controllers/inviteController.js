@@ -55,17 +55,19 @@ exports.sendInvites = async (req, res) => {
       for (const email of inviteEmails) {
         const token = uuidv4();
         const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
-  
+      
         const invite = await Invite.create({
           event: event._id,
           email,
           token,
           expiresAt
         });
-  
+      
+        const qrLink = `https://bloomday-dev.netlify.app/invite/view/${token}`; 
+      
         const link = `http://localhost:3000/invite/accept/${token}`;
         const declineLink = `http://localhost:3000/invite/decline/${token}`;
-  
+      
         await sendEmail({
           to: email,
           subject: `You're Invited to ${event.name}!`,
@@ -75,25 +77,28 @@ exports.sendInvites = async (req, res) => {
               <p><strong>Date:</strong> ${new Date(event.date).toLocaleString()}</p>
               <p><strong>Location:</strong> ${event.location}</p>
               <p>${event.description}</p>
-  
+      
               <div style="margin: 20px 0;">
                 <a href="${link}" style="padding: 10px 15px; background: green; color: white; text-decoration: none; border-radius: 5px;">Accept Invitation</a>
                 <a href="${declineLink}" style="padding: 10px 15px; background: crimson; color: white; text-decoration: none; border-radius: 5px; margin-left: 10px;">Decline</a>
               </div>
-  
-              ${qrImageUrl ? `<p>Or scan to view the event:</p><img src="${qrImageUrl}" alt="QR Code" style="width: 150px; height: 150px;" />` : ''}
-  
+      
+              <p>Or scan/view this invite:</p>
+              <a href="${qrLink}">${qrLink}</a> 
+      
+              ${qrImageUrl ? `<img src="${qrImageUrl}" alt="QR Code" style="width: 150px; height: 150px;" />` : ''}
+      
               ${ivImageHtml}
-  
+      
               <p style="font-size: 0.9em; color: gray;">This invite will expire on <strong>${expiresAt.toLocaleDateString()}</strong>.</p>
               <p style="font-size: 0.9em; color: gray;">Sent from Bloomday</p>
             </div>
           `,
         });
-  
+      
         inviteDocs.push(invite._id);
       }
-  
+      
       event.invitees = [...(event.invitees || []), ...inviteDocs];
       await event.save();
   
@@ -231,5 +236,33 @@ exports.revokeInvite = async (req, res) => {
       res.status(500).json({ error: 'Failed to revoke invite.' });
     }
   };
+
+
+exports.viewInvite = async (req, res) => {
+  try {
+    const { token } = req.params;
+    const invite = await Invite.findOne({ token }).populate('event');
+    if (!invite || invite.revoked) return res.status(404).json({ error: 'Invalid or revoked invite' });
+
+    res.status(200).json({
+      invite: {
+        email: invite.email,
+        status: invite.status,
+        expiresAt: invite.expiresAt,
+      },
+      event: {
+        name: invite.event.name,
+        date: invite.event.date,
+        location: invite.event.location,
+        description: invite.event.description,
+        ivImage: invite.event.ivImage,
+        host: invite.event.host,
+      },
+    });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to fetch invite info' });
+  }
+};
+
   
   
