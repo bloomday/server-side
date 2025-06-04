@@ -90,7 +90,7 @@ exports.createEvent = async (req, res) => {
   }
 };
 
-exports.getEventDetails = async (req, res) => {
+exports.getEventDetails = async (req, res) => {  
   const event = await Event.findById(req.params.eventId).populate(
     "contributions.user",
     "name"
