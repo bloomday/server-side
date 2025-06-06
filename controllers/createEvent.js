@@ -35,7 +35,7 @@ exports.createEvent = async (req, res) => {
 
     const eventUrl = `https://bloomday-dev.netlify.app/${slug}`;
     // Generate QR Code as a buffer
-    const qrBuffer = await QRCode.toBuffer(eventUrl);
+    const qrBuffer = await QRCode.toBuffer(eventUrl); 
     
 
     // Save buffer to a temp file
