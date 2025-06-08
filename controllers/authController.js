@@ -86,8 +86,11 @@ exports.resendVerificationEmail = async (req, res) => {
     user.verificationExpires = Date.now() + 3600000;
     await user.save();
 
-
-    res.json({ message: 'Verification email resent successfully' });
+    await sendVerificationEmail(user.email, verificationToken, 'verify');
+        return res.status(201).json({ 
+          message: 'Verification email resent successfully',
+          data: user });
+    
   } catch (err) {
     console.error('Resend email error:', err);
     res.status(500).json({ message: 'Failed to resend verification email' });
@@ -126,8 +129,14 @@ exports.forgotPassword = async (req, res) => {
     user.resetTokenExpires = Date.now() + 3600000;
     await user.save();
 
-  
-    res.json({ message: 'Reset link sent to your email' });
+    await sendVerificationEmail(user.email, resetToken, 'Reset password');
+        // return res.status(201).json({ 
+        //   message: 'Please verify your email',
+        //   data: user });
+
+  return res.status(201).json({ message: 'Reset link sent to your email',
+    data:resetToken
+   });
   } catch (err) {
     console.error('Forgot password error:', err);
     res.status(500).json({ message: 'Failed to send reset email' });
