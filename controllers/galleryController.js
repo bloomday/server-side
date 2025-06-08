@@ -1,6 +1,6 @@
 const Event = require('../models/eventModel');
 //const EventImage = require('../models/eventImageModel');
-const { uploadToCloudinary } = require('../utils/cloudinary');
+const { uploadToCloudinary } = require('../utils/cloudinary'); 
 
 exports.uploadMultipleImages = async (req, res) => {
   try {

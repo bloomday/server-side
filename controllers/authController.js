@@ -2,7 +2,11 @@ const User = require('../models/userModel');
 const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
 const { signupSchema, signinSchema } = require('../validators/auth');
-const { sendVerificationEmail } = require('../utils/sendEmail');
+const { sendVerificationEmail,
+  sendMail
+ } = require('../utils/sendEmail');
+
+ //const sendMail = require('../utils/sendEmails');
 
 const generateToken = (user) =>
   jwt.sign(
@@ -30,10 +34,16 @@ exports.signup = async (req, res) => {
       verificationExpires: Date.now() + 3600000, // 1 hour
     });
 
-    // await sendVerificationEmail(user.email, verificationToken, 'verify');
-     res.status(201).json({ 
-      message: 'Signed up successfully',
-      data: user });
+    // await sendMail({
+    //   to: user.email,
+    //   subject: 'Verify your email',
+    //   html: `<p>Click <a href="http://localhost:3000/verify-email?token=${verificationToken}">here</a> to verify your email.</p>`,
+    // });
+         await sendVerificationEmail(user.email, verificationToken, 'verify');
+        return res.status(201).json({ 
+          message: 'Please verify your email',
+          data: user });
+    
   } catch (err) {
     console.error('Signup error:', err); 
     res.status(500).json({ 
@@ -76,7 +86,7 @@ exports.resendVerificationEmail = async (req, res) => {
     user.verificationExpires = Date.now() + 3600000;
     await user.save();
 
-    await sendVerificationEmail(user.email, newToken, 'verify');
+
     res.json({ message: 'Verification email resent successfully' });
   } catch (err) {
     console.error('Resend email error:', err);
@@ -116,7 +126,7 @@ exports.forgotPassword = async (req, res) => {
     user.resetTokenExpires = Date.now() + 3600000;
     await user.save();
 
-    //await sendVerificationEmail(user.email, resetToken, 'reset');
+  
     res.json({ message: 'Reset link sent to your email' });
   } catch (err) {
     console.error('Forgot password error:', err);
