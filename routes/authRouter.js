@@ -6,7 +6,7 @@ const authenticate = require('../middlewares/authMiddleware');
 const authController = require('../controllers/authController');
 
 // Traditional auth
-router.post('/signup', authController.signup);
+router.post('/signup', authController.signup); 
 router.post('/signin', authController.signin);
 router.get('/verify-email', authController.verifyEmail);
 router.post('/resend-verification', authController.resendVerificationEmail);
