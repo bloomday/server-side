@@ -102,7 +102,9 @@ exports.sendInvites = async (req, res) => {
       event.invitees = [...(event.invitees || []), ...inviteDocs];
       await event.save();
   
-      res.status(200).json({ message: 'Invites sent successfully.' });
+      res.status(200).json({ message: 'Invites sent successfully.',
+        data: event
+       });
     } catch (err) {
       console.error(err);
       res.status(500).json({ error: 'Something went wrong while sending invites.' });

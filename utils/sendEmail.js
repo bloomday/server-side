@@ -1,26 +1,58 @@
-const nodemailer = require("nodemailer");
+// const nodemailer = require("nodemailer");
+
+// const transporter = nodemailer.createTransport({
+//   service: "gmail",
+//   auth: {
+//     user: process.env.GMAIL_USER,
+//     pass: process.env.GMAIL_PASS, 
+//   },
+// });
+
+// const sendMail = async ({ to, subject, html }) => {
+//   try {
+//     await transporter.sendMail({
+//       from: `"Bloomday Events" <${process.env.GMAIL_USER}>`,
+//       to,
+//       subject,
+//       html,
+//     });
+//   } catch (error) {
+//     console.error("Email sending error:", error);
+//     throw new Error("Email delivery failed");
+//   }
+// };
+
+const nodemailer = require('nodemailer');
 
 const transporter = nodemailer.createTransport({
-  service: "gmail",
+  service: 'gmail',
   auth: {
     user: process.env.GMAIL_USER,
-    pass: process.env.GMAIL_PASS, // must be App Password
+    pass: process.env.GMAIL_PASS,
   },
+  tls: {
+    rejectUnauthorized: false, // Accept self-signed certificates
+  },
+
 });
+
+
+
 
 const sendMail = async ({ to, subject, html }) => {
   try {
-    await transporter.sendMail({
-      from: `"Bloomday Events" <${process.env.GMAIL_USER}>`,
-      to,
-      subject,
-      html,
-    });
-  } catch (error) {
-    console.error("Email sending error:", error);
-    throw new Error("Email delivery failed");
-  }
+  await transporter.sendMail({
+    from: `"Bloomday Events" <${process.env.GMAIL_USER}>`,
+    to,
+    subject,
+    html,
+  })
+} catch (error) {
+  console.error("Email sending error:", error);
+  throw new Error("Email delivery failed");
+}
 };
+
 
 const sendVerificationEmail = async (to, token, type = "verify") => {
   const baseUrl = "https://bloomday-dev.netlify.app/auth/";
@@ -58,5 +90,6 @@ const sendContributionReceipt = async ({ to, name, amount, eventTitle }) => {
 module.exports = {
   sendVerificationEmail,
   sendEmail,
+  sendMail,
   sendContributionReceipt,
 };
