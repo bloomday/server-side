@@ -31,7 +31,8 @@ exports.signup = async (req, res) => {
       password,
       provider: 'local',
       verificationToken,
-      verificationExpires: Date.now() + 3600000, // 1 hour
+      verificationExpires: Date.now() + 24 * 60 * 60 * 1000
+
     });
 
     // await sendMail({
