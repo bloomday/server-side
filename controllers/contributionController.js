@@ -31,7 +31,7 @@ exports.initializePayment = async (req, res) => {
             eventId,
             message,
             userId: user?._id?.toString() || null,
-            name: user?.name || name,
+            name: user?.name || name, 
             email: user?.email || email,
           },
           callback_url: `https://bloomday-server-side.onrender.com/verify/${reference}`,
