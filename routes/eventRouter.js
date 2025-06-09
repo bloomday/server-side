@@ -2,7 +2,12 @@ const express = require("express");
 const router = express.Router();
 const { createEvent, 
     getEventDetails, 
-    getEventQRCode } = require("../controllers/createEvent");
+    getEventQRCode,
+    getTrendingEvents,
+    getEventsByUserId,
+    getEventsByUser,
+    getUserUpcomingEvents,
+    getUserPastEvents } = require("../controllers/createEvent");
 const {
   acceptInvite,
   resendInvite,
@@ -17,6 +22,12 @@ const upload = require('../middlewares/multer')
 //router.post("/create", authenticateUser, createEvent);
 router.post('/create-event', authenticateUser, upload.single('ivImage'), createEvent);
 router.get("/event/:eventId/details", getEventDetails);
+router.get('/events/trending', getTrendingEvents);
+router.get("/my-events", authenticateUser, getEventsByUser);
+router.get("/by-user/:userId", authenticateUser, getEventsByUserId);
+router.get('/events/upcoming', authenticateUser, getUserUpcomingEvents);
+router.get('/events/past', authenticateUser, getUserPastEvents);
+
 router.post("/send-invite/", sendInvites);
 router.post('/resend-invite',  resendInvite);
 router.post('/revoke-invite',  revokeInvite);

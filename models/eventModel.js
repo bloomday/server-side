@@ -38,12 +38,15 @@ const eventSchema = new mongoose.Schema({
       },
       name: String, // for guest
       email: String, // for guest
-      amount: Number,
+      amount:  { type: Number, required: true },
       message: String,
-      paidAt: Date,
+      paidAt:  { type: Date, default: Date.now },
     },
   ],
-});
+  views: { type: Number, default: 0 },
+  
+},
+{ timestamps: true });
 
 const { v4: uuidv4 } = require("uuid");
 
