@@ -87,7 +87,7 @@ const sendContributionReceipt = async ({ to, name, amount, eventTitle }) => {
   await sendMail({ to, subject, html });
 };
 
-module.exports = {
+module.exports = { 
   sendVerificationEmail,
   sendEmail,
   sendMail,

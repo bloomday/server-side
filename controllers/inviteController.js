@@ -65,8 +65,8 @@ exports.sendInvites = async (req, res) => {
       
         const qrLink = `https://bloomday-dev.netlify.app/invite/view/${token}`; 
       
-        const link = `http://localhost:3000/invite/accept/${token}`;
-        const declineLink = `http://localhost:3000/invite/decline/${token}`;
+        const link = `https://bloomday-server-side.onrender.com/invite/accept/${token}`;
+        const declineLink = `https://bloomday-server-side.onrender.com/invite/decline/${token}`;
       
         await sendEmail({
           to: email,
@@ -133,8 +133,8 @@ exports.resendInvite = async (req, res) => {
       const { name, date, description, location, slug, qrCode } = event;
       const token = invite.token;
   
-      const link = `http://localhost:3000/invite/accept/${token}`;
-      const declineLink = `http://localhost:3000/invite/decline/${token}`;
+      const link = `https://bloomday-server-side.onrender.com/invite/accept/${token}`;
+      const declineLink = `https://bloomday-server-side.onrender.com/invite/decline/${token}`;
       const qrImageUrl = qrCode;
   
       await sendEmail({
@@ -188,7 +188,7 @@ exports.acceptInvite = async (req, res) => {
     invite.respondedAt = new Date();
     await invite.save();
 
-    res.redirect(`http://localhost:8080/invite-success.html?status=accepted&event=${invite.event}`);
+    res.redirect(`https://bloomday-dev.netlify.app/invite-success.html?status=accepted&event=${invite.event}`);
   } catch (err) {
     res.status(500).json({ error: 'Could not process invite.' });
   }
@@ -214,7 +214,7 @@ exports.declineInvite = async (req, res) => {
       invite.respondedAt = new Date();
       await invite.save();
   
-      res.redirect(`http://localhost:8080/invite-success.html?status=declined&event=${invite.event}`);
+      res.redirect(`https://bloomday-dev.netlify.app/invite-success.html?status=declined&event=${invite.event}`);
     } catch (err) {
       res.status(500).json({ error: 'Could not process invite.' });
     }

@@ -8,7 +8,7 @@ const { sendContributionReceipt } = require("../utils/sendEmail");
 
 exports.initializePayment = async (req, res) => {
     const { eventId } = req.params;
-    const { amount, message, name, email } = req.body;
+    const { amount, message, name, email } = req.body; 
     const user = req.user;
   
     try {
@@ -34,7 +34,7 @@ exports.initializePayment = async (req, res) => {
             name: user?.name || name,
             email: user?.email || email,
           },
-          callback_url: `http://localhost:3000/verify/${reference}`,
+          callback_url: `https://bloomday-server-side.onrender.com/verify/${reference}`,
         },
         {
           headers: {
@@ -97,7 +97,7 @@ exports.verifyPayment = async (req, res) => {
       });
   
       res.redirect(
-        `http://localhost:8080/event-success.html?eventId=${event._id}`
+        `https://bloomday-dev.netlify.app/event-success.html?eventId=${event._id}`
       );
     } catch (err) {
       console.error(err?.response?.data || err);
