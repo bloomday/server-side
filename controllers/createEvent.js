@@ -145,7 +145,7 @@ exports.getTrendingEvents = async (req, res) => {
           views * 0.5 +
           contributors * 2 +
           totalAmount * 0.01
-          //ageInDays * 0.2;
+          //- ageInDays * 0.2;
 
         return {
           ...event,

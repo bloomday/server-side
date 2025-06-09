@@ -25,7 +25,7 @@ router.get('/auth/google/callback', passport.authenticate('google', { session: f
     const { user } = req.user;
   
     // Redirect to frontend with the user's name as a query parameter
-    return res.redirect(`http://localhost:8080/login.html?name=${encodeURIComponent(user.name)}`);
+    return res.redirect(`https://bloomday-dev.netlify.app/auth/login.html?name=${encodeURIComponent(user.name)}`);
   });
   
 
