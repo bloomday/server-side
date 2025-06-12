@@ -12,6 +12,8 @@ router.get('/verify-email', authController.verifyEmail);
 router.post('/resend-verification', authController.resendVerificationEmail);
 router.post('/forgot-password', authController.forgotPassword);
 router.post('/reset-password', authController.resetPassword);
+router.post('/logout', authenticate, authController.logout);
+
 
 router.get('/profile', authenticate, (req, res) => {
   res.json({ user: req.user });
