@@ -6,12 +6,16 @@ const userSchema = new mongoose.Schema(
     name: String,
     email: { type: String, unique: true, lowercase: true },
     password: { type: String },
+    blacklist:{
+      type: Array,
+      default:[]
+    },
     provider: {
       type: String,
       enum: ["local", "google", "facebook", "apple"],
       default: "local",
     },
-    providerId: String, // Only used for OAuth
+    providerId: String, 
 
     avatar: String,
 
