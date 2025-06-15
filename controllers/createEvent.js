@@ -23,7 +23,7 @@ const generateUniqueSlug = async (baseSlug) => {
 // CREATE EVENT 
 exports.createEvent = async (req, res) => {
   try {
-    const { name, description, date, location, coHostId, allowCrowdfunding } =
+    const { name, description, date, location, coHostId, allowCrowdfunding,visibility } =
       req.body;
 
     const userId = req.user._id;
@@ -69,6 +69,7 @@ exports.createEvent = async (req, res) => {
       eventUrl,
       description,
       date,
+      visibility,
       location,
       hosts,
       allowCrowdfunding: allowCrowdfunding || false,
@@ -90,21 +91,146 @@ exports.createEvent = async (req, res) => {
   }
 };
 
-exports.getEventDetails = async (req, res) => {  
-  const event = await Event.findById(req.params.eventId,
-    { $inc: { views: 1 } },
-    { new: true }
-  ).populate(
-    "contributions.user",
-    "name"
-  );
-  const totalAmount = event.contributions.reduce((sum, c) => sum + c.amount, 0);
+exports.getEventDetailss = async (req, res) => {
+  try {
+    const { eventId } = req.params;
+    const token = req.query.token; // guest invite token passed as query param
 
-  res.json({ event, totalAmount });
+    const event = await Event.findById(eventId)
+      .populate("contributions.user", "name");
+
+    if (!event) {
+      return res.status(404).json({ error: 'Event not found' });
+    }
+
+    let canView = false;
+
+    if (event.visibility === 'public') {
+      canView = true;
+    } else {
+      const isHost = event.hosts.some(hostId =>
+        hostId.toString() === req.user?._id?.toString()
+      );
+
+      const isInvitedUser = req.user && await Invite.exists({
+        event: event._id,
+        email: req.user.email,
+        revoked: false,
+        expiresAt: { $gt: new Date() }
+      });
+
+      const isGuestViaToken = token && await Invite.exists({
+        event: event._id,
+        token,
+        revoked: false,
+        expiresAt: { $gt: new Date() }
+      });
+
+      if (isHost || isInvitedUser || isGuestViaToken) {
+        canView = true;
+      }
+    }
+
+    if (!canView) {
+      return res.status(403).json({ message: "You don't have access to this private event." });
+    }
+
+    // 👇 Count view only if user can view
+    event.views = (event.views || 0) + 1;
+    await event.save();
+
+    const totalAmount = event.contributions.reduce((sum, c) => sum + c.amount, 0);
+    res.json({ event, totalAmount });
+
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Something went wrong while fetching event details.' });
+  }
 };
 
+
+exports.getEventDetails = async (req, res) => {
+  try {
+    const event = await Event.findByIdAndUpdate(
+      req.params.eventId,
+      { $inc: { views: 1 } },
+      { new: true }
+    ).populate("contributions.user", "name");
+
+    if (!event) return res.status(404).json({ message: "Event not found" });
+
+    const totalAmount = event.contributions.reduce((sum, c) => sum + c.amount, 0);
+    res.json({ event, totalAmount });
+  } catch (error) {
+    console.error("Error fetching event details:", error);
+    res.status(500).json({ error: "Server error" });
+  }
+};
+
+
 //Downloadable QR code Image
-exports.getEventQRCode = async (req, res) => {
+
+exports.getEventQRCode = async (req, res) => { 
+  try {
+    const { eventId } = req.params;
+    const token = req.query.token;
+
+    const event = await Event.findById(eventId);
+    if (!event || !event.qrCode) {
+      return res.status(404).json({ error: "QR code not found" });
+    }
+
+    let canAccessQRCode = false;
+
+    if (event.visibility === "public") {
+      // Public event: allow anyone to access the QR code
+      canAccessQRCode = true;
+    } else {
+      // Private event: restrict to host or invited guest
+      const isHost = event.hosts.some(
+        hostId => hostId.toString() === req.user?._id?.toString()
+      );
+
+      const isInvitedUser = req.user && await Invite.exists({
+        event: event._id,
+        email: req.user.email,
+        revoked: false,
+        expiresAt: { $gt: new Date() },
+      });
+
+      const isGuestViaToken = token && await Invite.exists({
+        event: event._id,
+        token,
+        revoked: false,
+        expiresAt: { $gt: new Date() },
+      });
+
+      if (isHost || isInvitedUser || isGuestViaToken) {
+        canAccessQRCode = true;
+      }
+    }
+
+    if (!canAccessQRCode) {
+      return res.status(403).json({ message: "You are not authorized to access this QR code." });
+    }
+
+    // Send the QR code as an image
+    const base64Data = event.qrCode.replace(/^data:image\/png;base64,/, "");
+    const imgBuffer = Buffer.from(base64Data, "base64");
+
+    res.set({
+      "Content-Type": "image/png",
+      "Content-Disposition": `attachment; filename="${event.slug}_qr.png"`,
+    });
+
+    res.send(imgBuffer);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Failed to download QR code" });
+  }
+};
+
+exports.getEventQRCodes = async (req, res) => {
   try {
     const { eventId } = req.params;
     const event = await Event.findById(eventId);
@@ -131,7 +257,7 @@ exports.getTrendingEvents = async (req, res) => {
   try {
     //const events = await Event.find().populate... { createdAt: { $gte: thirtyDaysAgo } }
     const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
-    const events = await Event.find().populate("contributions.user", "name").lean();
+    const events = await Event.find({visibility: 'public'}).populate("contributions.user", "name").lean();
 
     const trending = events
       .map((event) => {

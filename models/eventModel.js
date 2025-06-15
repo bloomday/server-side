@@ -27,8 +27,12 @@ const eventSchema = new mongoose.Schema({
       uploadedAt: { type: Date, default: Date.now },
     },
   ],
-  ivImage: { type: String }, // URL or local path to uploaded IV card
-
+  visibility: {
+    type: String,
+    enum: ['public', 'private'],
+    default: 'public',
+  },
+  ivImage: { type: String },
   contributions: [
     {
       user: {
