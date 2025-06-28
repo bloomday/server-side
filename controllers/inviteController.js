@@ -63,7 +63,7 @@ exports.sendInvites = async (req, res) => {
           expiresAt
         });
       
-        const qrLink = `https://bloomday-dev.netlify.app/invite/view/${token}`; 
+        //const qrLink = `https://bloomday-dev.netlify.app/invite/view/${token}`; 
       
         const link = `https://bloomday-server-side.onrender.com/invite/accept/${token}`;
         const declineLink = `https://bloomday-server-side.onrender.com/invite/decline/${token}`;
@@ -84,7 +84,6 @@ exports.sendInvites = async (req, res) => {
               </div>
       
               <p>Or scan/view this invite:</p>
-              <a href="${qrLink}">${qrLink}</a> 
       
               ${qrImageUrl ? `<img src="${qrImageUrl}" alt="QR Code" style="width: 150px; height: 150px;" />` : ''}
       
