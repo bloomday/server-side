@@ -20,7 +20,7 @@ const generateUniqueSlug = async (baseSlug) => {
   return slug;
 };
 
-// CREATE EVENT 
+
 exports.createEvent = async (req, res) => {
   try {
     const { name, description, date, location, coHostId, allowCrowdfunding,visibility } =
@@ -29,8 +29,13 @@ exports.createEvent = async (req, res) => {
     const userId = req.user._id;
     const hosts = [userId];
     if (coHostId) hosts.push(coHostId);
-
-    let baseSlug = slugify(name, { lower: true, strict: true });
+    if (!name || typeof name !== 'string') {
+      return res.status(400).json({ message: 'Event name is required and must be a string' });
+    }
+    
+    const baseSlug = slugify(name, { lower: true, strict: true });
+    
+    //let baseSlug = slugify(name, { lower: true, strict: true });
     const slug = await generateUniqueSlug(baseSlug);
 
     const eventUrl = `https://bloomday-dev.netlify.app/${slug}`;
@@ -91,10 +96,10 @@ exports.createEvent = async (req, res) => {
   }
 };
 
-exports.getEventDetailss = async (req, res) => {
+exports.getEventDetails = async (req, res) => {
   try {
     const { eventId } = req.params;
-    const token = req.query.token; // guest invite token passed as query param
+    const token = req.query.token; 
 
     const event = await Event.findById(eventId)
       .populate("contributions.user", "name");
@@ -108,10 +113,19 @@ exports.getEventDetailss = async (req, res) => {
     if (event.visibility === 'public') {
       canView = true;
     } else {
-      const isHost = event.hosts.some(hostId =>
-        hostId.toString() === req.user?._id?.toString()
-      );
+      // const isHost = event.hosts.some(hostId =>
+      //   hostId.toString() === req.user?._id?.toString()
+      // );
 
+      // const isHost = event.hosts.some(host => {
+      //   const hostId = host._id || host; // supports both populated and raw ObjectIds
+      //   return hostId.toString() === req.user._id.toString();
+      // });
+      
+      const isHost = req.user && event.hosts.some(
+        hostId => hostId.toString() === req.user._id.toString()
+      );
+      
       const isInvitedUser = req.user && await Invite.exists({
         event: event._id,
         email: req.user.email,
@@ -135,7 +149,7 @@ exports.getEventDetailss = async (req, res) => {
       return res.status(403).json({ message: "You don't have access to this private event." });
     }
 
-    // 👇 Count view only if user can view
+    //Count view only if user can view
     event.views = (event.views || 0) + 1;
     await event.save();
 
@@ -149,7 +163,7 @@ exports.getEventDetailss = async (req, res) => {
 };
 
 
-exports.getEventDetails = async (req, res) => {
+exports.getEventDetailss = async (req, res) => {
   try {
     const event = await Event.findByIdAndUpdate(
       req.params.eventId,
@@ -187,8 +201,12 @@ exports.getEventQRCode = async (req, res) => {
       canAccessQRCode = true;
     } else {
       // Private event: restrict to host or invited guest
-      const isHost = event.hosts.some(
-        hostId => hostId.toString() === req.user?._id?.toString()
+      // const isHost = event.hosts.some(
+      //   hostId => hostId.toString() === req.user?._id?.toString()
+      // );
+
+      const isHost = req.user && event.hosts.some(
+        hostId => hostId.toString() === req.user._id.toString()
       );
 
       const isInvitedUser = req.user && await Invite.exists({
@@ -255,9 +273,8 @@ exports.getEventQRCodes = async (req, res) => {
 
 exports.getTrendingEvents = async (req, res) => {
   try {
-    //const events = await Event.find().populate... { createdAt: { $gte: thirtyDaysAgo } }
     const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
-    const events = await Event.find({visibility: 'public'}).populate("contributions.user", "name").lean();
+    const events = await Event.find({visibility: 'public', createdAt: { $gte: thirtyDaysAgo }}).populate("contributions.user", "name").lean();
 
     const trending = events
       .map((event) => {
@@ -265,13 +282,13 @@ exports.getTrendingEvents = async (req, res) => {
         const totalAmount = event.contributions?.reduce((sum, c) => sum + c.amount, 0) || 0;
         const contributors = event.contributions?.length || 0;
 
-        //const ageInDays = (Date.now() - new Date(event.createdAt)) / (1000 * 60 * 60 * 24);
+        const ageInDays = (Date.now() - new Date(event.createdAt)) / (1000 * 60 * 60 * 24);
 
         const score =
           views * 0.5 +
           contributors * 2 +
-          totalAmount * 0.01
-          //- ageInDays * 0.2;
+          totalAmount * 0.01 -
+          ageInDays * 0.2;
 
         return {
           ...event,
