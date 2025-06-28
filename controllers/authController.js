@@ -41,9 +41,10 @@ exports.signup = async (req, res) => {
     //   html: `<p>Click <a href="http://localhost:3000/verify-email?token=${verificationToken}">here</a> to verify your email.</p>`,
     // });
          await sendVerificationEmail(user.email, verificationToken, 'verify');
-        return res.status(201).json({ 
-          message: 'Please verify your email',
-          data: user });
+         return res.status(201).json({ 
+          message: 'Verification email sent. Please check your inbox and spam folder to verify your email.',
+          data: user 
+        });        
     
   } catch (err) {
     console.error('Signup error:', err); 
