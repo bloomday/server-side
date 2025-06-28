@@ -102,6 +102,7 @@ exports.getEventDetails = async (req, res) => {
     const token = req.query.token; 
 
     const event = await Event.findById(eventId)
+      .populate("hosts", "name email")
       .populate("contributions.user", "name");
 
     if (!event) {
