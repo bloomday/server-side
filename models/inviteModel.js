@@ -15,8 +15,18 @@ const inviteSchema = new mongoose.Schema({
     type: Boolean,
     default: false
   },
-  
-  
+  reminderTwoWeeksSent: {
+    type: Boolean,
+    default: false,
+  },
+  reminderOneWeekSent: {
+    type: Boolean,
+    default: false,
+  },
+  finalReminderSent: {
+    type: Boolean,
+    default: false,
+  },  
   token: String, // unique token for the invite link
   status: {
     type: String,

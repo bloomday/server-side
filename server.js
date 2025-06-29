@@ -8,6 +8,8 @@ require('dotenv').config();
 require('./config/dbConfig');
 require('./cron/inviteCleanup');
 require('./cron/inviteReminder');
+require('./cron/inviteWeekReminder')
+require ('./cron/eventReminder')
 require('./auth/passport');
 
 const app = express();
