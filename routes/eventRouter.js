@@ -7,7 +7,8 @@ const { createEvent,
     getEventsByUserId,
     getEventsByUser,
     getUserUpcomingEvents,
-    getUserPastEvents } = require("../controllers/createEvent");
+    getUserPastEvents,
+    sendEventSummaryManual } = require("../controllers/createEvent");
     
 const {
   acceptInvite,
@@ -15,7 +16,10 @@ const {
   sendInvites,
   revokeInvite,
   declineInvite,
-  viewInvite
+  viewInvite,
+  getAcceptedInvites,
+  getDeclinedInvites,
+  getInviteSummary
 } = require("../controllers/inviteController");
 const authenticateUser = require("../middlewares/authMiddleware");
 const optionalAuth = require("../middlewares/optionalAuth");
@@ -35,5 +39,13 @@ router.get("/invite/view/:token", viewInvite)
 router.get("/invite/accept/:token", acceptInvite);
 router.get("/invite/decline/:token", declineInvite);
 router.get("/events/:eventId/qr", optionalAuth, getEventQRCode);
+router.get('/event/:eventId/invites/accepted', getAcceptedInvites);
+router.get('/event/:eventId/invites/declined', getDeclinedInvites);
+router.get('/event/:eventId/invites/summary', getInviteSummary);
+// routes/eventRoutes.js
+router.get('/event/:eventId/send-summary', authenticateUser, sendEventSummaryManual);
+
+
+
 
 module.exports = router;

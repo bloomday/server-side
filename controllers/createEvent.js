@@ -7,6 +7,7 @@ const { v4: uuidv4 } = require("uuid");
 const Event = require("../models/eventModel");
 const Invite = require("../models/inviteModel");
 const sendEmail = require("../utils/sendEmail");
+const generatePDFBuffer = require('../utils/generatePDF');
 
 const generateUniqueSlug = async (baseSlug) => {
   let slug = baseSlug;
@@ -332,6 +333,76 @@ exports.getEventsByUserId = async (req, res) => {
     res.status(500).json({ error: "Failed to fetch events" });
   }
 };
+
+
+exports.sendEventSummaryManual = async (req, res) => {
+  try {
+    const { eventId } = req.params;
+    const event = await Event.findById(eventId)
+      .populate('hosts', 'name email')
+      .populate('contributions.user', 'name email');
+
+    if (!event) return res.status(404).json({ message: 'Event not found' });
+
+    const invites = await Invite.find({ event: event._id });
+    const accepted = invites.filter(i => i.status === 'accepted').map(i => i.email);
+    const declined = invites.filter(i => i.status === 'declined').map(i => i.email);
+    const pending = invites.filter(i => !i.status || i.status === 'pending').map(i => i.email);
+    const totalAmount = event.contributions.reduce((sum, c) => sum + c.amount, 0);
+
+    const contributionList = event.contributions.map(c => `
+      <li>${c.user?.name || 'Anonymous'} (${c.user?.email || 'N/A'}): ₦${c.amount}</li>
+    `).join('');
+
+    const html = `
+      <div style="font-family: Arial, sans-serif;">
+        <h2>📊 Final Event Summary: ${event.name}</h2>
+        <p><strong>Date:</strong> ${new Date(event.date).toLocaleString()}</p>
+        <p><strong>Total Views:</strong> ${event.views}</p>
+        <p><strong>📸 Gallery Uploads:</strong> ${event.gallery?.length || 0}</p>
+
+        <h3>🎟️ RSVP Summary:</h3>
+        <ul>
+          <li>✅ Accepted: ${accepted.length}</li>
+          <li>❌ Declined: ${declined.length}</li>
+          <li>⏳ Pending: ${pending.length}</li>
+        </ul>
+
+        <h3>💸 Contributions:</h3>
+        <p><strong>Total Raised:</strong> ₦${totalAmount}</p>
+        <ul>${contributionList || '<li>No contributions yet.</li>'}</ul>
+
+        <p>📧 Accepted: ${accepted.join(', ')}</p>
+        <p>📧 Declined: ${declined.join(', ')}</p>
+        <p>📧 Pending: ${pending.join(', ')}</p>
+
+        <p style="font-size: 0.9em; color: gray;">Sent from Bloomday</p>
+      </div>
+    `;
+
+    const pdfBuffer = await generatePDFBuffer(html);
+    const hostEmails = event.hosts.map(h => h.email);
+
+    for (const hostEmail of hostEmails) {
+      await sendEmail({
+        to: hostEmail,
+        subject: `📊 Final Summary for ${event.name}`,
+        html,
+        attachments: [{
+          filename: `${event.slug}-summary.pdf`,
+          content: pdfBuffer,
+          contentType: 'application/pdf'
+        }]
+      });
+    }
+
+    res.json({ message: 'Summary sent successfully' });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to send event summary' });
+  }
+};
+
 
 //GET /api/events/my-events?page=2&limit=5
 //GET /api/events/my-events?status=upcoming
