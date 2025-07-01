@@ -42,7 +42,6 @@ router.get("/events/:eventId/qr", optionalAuth, getEventQRCode);
 router.get('/event/:eventId/invites/accepted', getAcceptedInvites);
 router.get('/event/:eventId/invites/declined', getDeclinedInvites);
 router.get('/event/:eventId/invites/summary', getInviteSummary);
-// routes/eventRoutes.js
 router.get('/event/:eventId/send-summary', authenticateUser, sendEventSummaryManual);
 
 

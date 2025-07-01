@@ -262,8 +262,8 @@ exports.resendInvite = async (req, res) => {
       const { name, date, description, location, slug, qrCode } = event;
       const token = invite.token;
   
-      const link = `https://bloomday-server-side.onrender.com/invite/accept/${token}`;
-      const declineLink = `https://bloomday-server-side.onrender.com/invite/decline/${token}`;
+      const link = `https://bloomday-server-sides.onrender.com/invite/accept/${token}`;
+      const declineLink = `https://bloomday-server-sides.onrender.com/invite/decline/${token}`;
       const qrImageUrl = qrCode;
   
       await sendEmail({
@@ -435,7 +435,7 @@ exports.getDeclinedInvites = async (req, res) => {
   }
 };
 
-// GET /event/:eventId/invites/summary
+
 exports.getInviteSummary = async (req, res) => {
   try {
     const { eventId } = req.params;

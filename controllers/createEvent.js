@@ -184,8 +184,6 @@ exports.getEventDetailss = async (req, res) => {
 };
 
 
-//Downloadable QR code Image
-
 exports.getEventQRCode = async (req, res) => { 
   try {
     const { eventId } = req.params;
