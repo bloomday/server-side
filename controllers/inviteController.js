@@ -92,7 +92,7 @@ exports.sendInvites = async (req, res) => {
         expiresAt
       });
 
-      const link = `https://bloomday-server-side.onrender.com/invite/accept/${token}`;
+      const link = `https://bloomday-dev.netlify.app/invite/accept/${token}`;
       const declineLink = `https://bloomday-dev.netlify.app/invite/decline/${token}`;
 
       await sendEmail({
