@@ -92,7 +92,7 @@ exports.sendInvites = async (req, res) => {
         expiresAt
       });
 
-      const link = `https://bloomday-dev.netlify.app/invite/accept/${token}`;
+      const link = `https://bloomday-server-side.onrender.com/invite/accept/${token}`;
       const declineLink = `https://bloomday-dev.netlify.app/invite/decline/${token}`;
 
       await sendEmail({
@@ -262,8 +262,8 @@ exports.resendInvite = async (req, res) => {
       const { name, date, description, location, slug, qrCode } = event;
       const token = invite.token;
   
-      const link = `https://bloomday-server-sides.onrender.com/invite/accept/${token}`;
-      const declineLink = `https://bloomday-server-sides.onrender.com/invite/decline/${token}`;
+      const link = `https://bloomday-server-side.onrender.com/invite/accept/${token}`;
+      const declineLink = `https://bloomday-server-side.onrender.com/invite/decline/${token}`;
       const qrImageUrl = qrCode;
   
       await sendEmail({
@@ -295,8 +295,6 @@ exports.resendInvite = async (req, res) => {
     }
   };
   
-
-
 exports.acceptInvite = async (req, res) => {
   try {
     const { token } = req.params;
@@ -317,7 +315,11 @@ exports.acceptInvite = async (req, res) => {
     invite.respondedAt = new Date();
     await invite.save();
 
-    res.redirect(`https://bloomday-dev.netlify.app/invite-success.html?status=accepted&event=${invite.event}`);
+    return res.status(200).json({
+      message: "Invited accepted",
+      data : invite
+
+    })
   } catch (err) {
     res.status(500).json({ error: 'Could not process invite.' });
   }
@@ -343,7 +345,11 @@ exports.declineInvite = async (req, res) => {
       invite.respondedAt = new Date();
       await invite.save();
   
-      res.redirect(`https://bloomday-dev.netlify.app/invite-success.html?status=declined&event=${invite.event}`);
+      return res.status(200).json({
+        message: "Invited declined",
+        data : invite
+  
+      });
     } catch (err) {
       res.status(500).json({ error: 'Could not process invite.' });
     }

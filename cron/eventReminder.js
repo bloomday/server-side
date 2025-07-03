@@ -150,6 +150,8 @@ const sendFinalReminders = async () => {
 // ⏰ Run daily at 7:30 AM
 cron.schedule('30 7 * * *', sendFinalReminders);
 
+
+
 // Run once on startup
 sendFinalReminders();
 
