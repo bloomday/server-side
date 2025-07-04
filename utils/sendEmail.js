@@ -55,7 +55,7 @@ const sendMail = async ({ to, subject, html }) => {
 
 
 const sendVerificationEmail = async (to, token, type = "verify") => {
-  const baseUrl = "https://bloomday-dev.netlify.app/auth/";
+  const baseUrl = "https://bloomday.netlify.app/auth/";
   const link =
     type === "verify"
       ? `${baseUrl}verify-email?token=${token}`

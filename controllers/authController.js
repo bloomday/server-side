@@ -5,6 +5,7 @@ const { signupSchema, signinSchema } = require('../validators/auth');
 const { sendVerificationEmail,
   sendMail
  } = require('../utils/sendEmail');
+ const Invite = require("../models/inviteModel")
 
  //const sendMail = require('../utils/sendEmails');
 
@@ -15,7 +16,46 @@ const generateToken = (user) =>
     { expiresIn: process.env.JWT_EXPIRES_IN }
   );
 
+
 exports.signup = async (req, res) => {
+    try {
+      const { error } = signupSchema.validate(req.body);
+      if (error) return res.status(400).json({ message: error.details[0].message });
+  
+      const { name, email, password } = req.body;
+      const existing = await User.findOne({ email });
+      if (existing) return res.status(400).json({ message: 'Email already exists' });
+  
+      const verificationToken = crypto.randomBytes(32).toString('hex');
+      const user = await User.create({
+        name,
+        email,
+        password,
+        provider: 'local',
+        verificationToken,
+        verificationExpires: Date.now() + 24 * 60 * 60 * 1000
+      });
+  
+      // Here is where we link old invites to new user
+      await Invite.updateMany(
+        { email: user.email, user: null },
+        { user: user._id }
+      );
+      
+  
+      await sendVerificationEmail(user.email, verificationToken, 'verify');
+      return res.status(201).json({ 
+        message: 'Verification email sent. Please check your inbox and spam folder to verify your email.',
+        data: user 
+      });        
+  
+    } catch (err) {
+      console.error('Signup error:', err); 
+      res.status(500).json({ message: 'Something went wrong during signup' });
+    }
+  };
+  
+exports.signups = async (req, res) => {
   try {
     const { error } = signupSchema.validate(req.body);
     if (error) return res.status(400).json({ message: error.details[0].message });

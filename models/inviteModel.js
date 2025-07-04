@@ -2,6 +2,12 @@ const mongoose = require('mongoose');
 
 const inviteSchema = new mongoose.Schema({
   event: { type: mongoose.Schema.Types.ObjectId, ref: 'Event' },
+  user: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    default: null,
+  },
+  
   email: String,
   expiresAt: {
     type: Date,

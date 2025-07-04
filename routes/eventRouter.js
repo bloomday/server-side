@@ -17,6 +17,7 @@ const {
   revokeInvite,
   declineInvite,
   viewInvite,
+  viewMyInvites,
   getAcceptedInvites,
   getDeclinedInvites,
   getInviteSummary
@@ -36,13 +37,13 @@ router.post("/send-invite/", sendInvites);
 router.post('/resend-invite',  resendInvite);
 router.post('/revoke-invite',  revokeInvite);
 router.get("/invite/view/:token", viewInvite)
+router.get("/myInvites", authenticateUser, viewMyInvites)
 router.get("/invite/accept/:token", acceptInvite);
 router.get("/invite/decline/:token", declineInvite);
 router.get("/events/:eventId/qr", optionalAuth, getEventQRCode);
 router.get('/event/:eventId/invites/accepted', getAcceptedInvites);
 router.get('/event/:eventId/invites/declined', getDeclinedInvites);
 router.get('/event/:eventId/invites/summary', getInviteSummary);
-// routes/eventRoutes.js
 router.get('/event/:eventId/send-summary', authenticateUser, sendEventSummaryManual);
 
 
