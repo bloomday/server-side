@@ -97,7 +97,7 @@ exports.verifyPayment = async (req, res) => {
       });
   
       res.redirect(
-        `https://bloomday-dev.netlify.app/event-success.html?eventId=${event._id}`
+        `https://bloomday.netlify.app/event-success.html?eventId=${event._id}`
       );
     } catch (err) {
       console.error(err?.response?.data || err);

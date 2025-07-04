@@ -2,6 +2,7 @@ const { v4: uuidv4 } = require('uuid');
 const Invite = require('../models/inviteModel');
 const {sendEmail} = require('../utils/sendEmail');
 const Event = require ('../models/eventModel')
+const User = require("../models/userModel")
 
 
 
@@ -28,6 +29,7 @@ const axios = require('axios');
 const fs = require('fs');
 const tmp = require('tmp');
 
+
 exports.sendInvites = async (req, res) => {
   try {
     const { eventId, inviteEmails } = req.body;
@@ -35,7 +37,122 @@ exports.sendInvites = async (req, res) => {
     const event = await Event.findById(eventId);
     if (!event) return res.status(404).json({ error: 'Event not found.' });
 
-    const eventUrl = `https://bloomday-dev.netlify.app/${event.slug}`;
+    const eventUrl = `https://bloomday.netlify.app/${event.slug}`;
+    const qrImageUrl = event.qrCode;
+
+    const inviteDocs = [];
+    const skippedEmails = [];
+
+    let ivImageAttachment = null;
+    let ivImageHtml = '';
+
+    // Prepare invitation image
+    if (event.ivImage) {
+      if (event.ivImage.startsWith('http')) {
+        const response = await axios.get(event.ivImage, { responseType: 'arraybuffer' });
+        const tmpFile = tmp.fileSync({ postfix: '.png' });
+        fs.writeFileSync(tmpFile.name, response.data);
+        ivImageAttachment = {
+          filename: 'invitation-card.png',
+          path: tmpFile.name,
+          cid: 'ivcard'
+        };
+      } else {
+        ivImageAttachment = {
+          filename: 'invitation-card.png',
+          path: path.resolve(event.ivImage),
+          cid: 'ivcard'
+        };
+      }
+
+      ivImageHtml = `
+        <p>Here's your official invitation card:</p>
+        <img src="${event.ivImage}" alt="Invitation Card" style="max-width:100%; border-radius: 8px;" />
+      `;
+    }
+
+    for (const email of inviteEmails) {
+      const existingInvite = await Invite.findOne({
+        event: event._id,
+        email,
+        revoked: false,
+        expiresAt: { $gt: new Date() }
+      });
+
+      if (existingInvite) {
+        skippedEmails.push(email);
+        continue;
+      }
+
+      const token = uuidv4();
+      const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+
+      // Optional: check if recipient already has a user account
+      const existingUser = await User.findOne({ email });
+
+      const invite = await Invite.create({
+        event: event._id,
+        email,
+        token,
+        expiresAt,
+        user: existingUser?._id || undefined,
+      });
+
+      const link = `https://bloomday.netlify.app/invite/accept/${token}`;
+      const declineLink = `https://bloomday.netlify.app/invite/decline/${token}`;
+
+      await sendEmail({
+        to: email,
+        subject: `You're Invited to ${event.name}!`,
+        html: `
+          <div style="font-family: Arial, sans-serif; padding: 20px;">
+            <h2 style="color: #5C67F2;">🎉 You're Invited to ${event.name}!</h2>
+            <p><strong>Date:</strong> ${new Date(event.date).toLocaleString()}</p>
+            <p><strong>Location:</strong> ${event.location}</p>
+            <p>${event.description}</p>
+
+            <div style="margin: 20px 0;">
+              <a href="${link}" style="padding: 10px 15px; background: green; color: white; text-decoration: none; border-radius: 5px;">Accept Invitation</a>
+              <a href="${declineLink}" style="padding: 10px 15px; background: crimson; color: white; text-decoration: none; border-radius: 5px; margin-left: 10px;">Decline</a>
+            </div>
+
+            ${qrImageUrl ? `<img src="${qrImageUrl}" alt="QR Code" style="width: 150px; height: 150px;" />` : ''}
+            ${ivImageHtml}
+
+            <p style="font-size: 0.9em; color: gray;">This invite will expire on <strong>${expiresAt.toLocaleDateString()}</strong>.</p>
+            <p style="font-size: 0.9em; color: gray;">Sent from Bloomday</p>
+          </div>
+        `
+      });
+
+      inviteDocs.push(invite._id);
+    }
+
+    event.invitees = [...(event.invitees || []), ...inviteDocs];
+    await event.save();
+
+    res.status(200).json({
+      message: 'Invites processed.',
+      sentCount: inviteDocs.length,
+      skippedCount: skippedEmails.length,
+      skippedEmails,
+      data: event
+    });
+
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Something went wrong while sending invites.' });
+  }
+};
+
+exports.sendInvitess = async (req, res) => {
+  try {
+    const { eventId, inviteEmails } = req.body;
+
+    const event = await Event.findById(eventId);
+    if (!event) return res.status(404).json({ error: 'Event not found.' });
+
+    const eventUrl = `https://bloomday.netlify.app/${event.slug}`;
     const qrImageUrl = event.qrCode;
 
     const inviteDocs = [];
@@ -92,8 +209,8 @@ exports.sendInvites = async (req, res) => {
         expiresAt
       });
 
-      const link = `https://bloomday-dev.netlify.app/invite/accept/${token}`;
-      const declineLink = `https://bloomday-dev.netlify.app/invite/decline/${token}`;
+      const link = `https://bloomday.netlify.app/invite/accept/${token}`;
+      const declineLink = `https://bloomday.netlify.app/invite/decline/${token}`;
 
       await sendEmail({
         to: email,
@@ -140,7 +257,7 @@ exports.sendInvites = async (req, res) => {
 };
 
 
-exports.sendInvitess = async (req, res) => {
+exports.sendInvitesss = async (req, res) => {
     try {
       const { eventId, inviteEmails } = req.body;
   
@@ -148,7 +265,7 @@ exports.sendInvitess = async (req, res) => {
       if (!event) return res.status(404).json({ error: 'Event not found.' });
       
   
-      const eventUrl = `https://bloomday-dev.netlify.app/${event.slug}`;
+      const eventUrl = `https://bloomday.netlify.app/${event.slug}`;
       const qrImageUrl = event.qrCode;
   
       const inviteDocs = [];
@@ -195,8 +312,8 @@ exports.sendInvitess = async (req, res) => {
       
         //const qrLink = `https://bloomday-dev.netlify.app/invite/view/${token}`; 
       
-        const link = `https://bloomday-dev.netlify.app/invite/accept/${token}`;
-        const declineLink = `https://bloomday-dev.netlify.app/invite/decline/${token}`;
+        const link = `https://bloomday.netlify.app/invite/accept/${token}`;
+        const declineLink = `https://bloomday.netlify.app/invite/decline/${token}`;
       
         await sendEmail({
           to: email,
@@ -400,6 +517,76 @@ exports.viewInvite = async (req, res) => {
     res.status(500).json({ error: 'Failed to fetch invite info' }); 
   }
 };
+
+
+exports.viewMyInvites = async (req, res) => {
+  try {
+    const userId = req.user._id;
+    const invites = await Invite.find({ user: userId, revoked: false }).populate('event');
+
+    const response = invites.map(invite => ({
+      token: invite.token,
+      status: invite.status,
+      expiresAt: invite.expiresAt,
+      event: {
+        name: invite.event?.name,
+        date: invite.event?.date,
+        location: invite.event?.location,
+        description: invite.event?.description,
+        ivImage: invite.event?.ivImage,
+        host: invite.event?.host,
+      },
+    }));
+
+    res.status(200).json({ 
+      message: "Invites fetched",
+      invites: response 
+    });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to fetch invites' });
+  }
+};
+
+
+// GET /api/invites/by-email?email=example@email.com
+exports.viewInvitesByEmail = async (req, res) => {
+  try {
+    const { email } = req.query;
+
+    if (!email) {
+      return res.status(400).json({ error: 'Email is required in query.' });
+    }
+
+    const invites = await Invite.find({ email, revoked: false }).populate('event');
+
+    if (!invites.length) {
+      return res.status(404).json({ error: 'No invites found for this email.' });
+    }
+
+    const response = invites.map(invite => ({
+      token: invite.token,
+      status: invite.status,
+      expiresAt: invite.expiresAt,
+      event: {
+        name: invite.event?.name,
+        date: invite.event?.date,
+        location: invite.event?.location,
+        description: invite.event?.description,
+        ivImage: invite.event?.ivImage,
+        host: invite.event?.host,
+      },
+    }));
+
+    res.status(200).json({ 
+      message: "Invites fetched for guest",
+      invites: response 
+    });
+  } catch (err) {
+    console.error('Guest invite lookup error:', err);
+    res.status(500).json({ error: 'Failed to fetch invites for this email.' });
+  }
+};
+
 
 
 exports.getAcceptedInvites = async (req, res) => {
