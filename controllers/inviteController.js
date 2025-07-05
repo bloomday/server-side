@@ -37,7 +37,7 @@ exports.sendInvites = async (req, res) => {
     const event = await Event.findById(eventId);
     if (!event) return res.status(404).json({ error: 'Event not found.' });
 
-    const eventUrl = `https://bloomday.netlify.app/${event.slug}`;
+    const eventUrl = `${process.env.FRONTEND_URL}/${event.slug}`;
     const qrImageUrl = event.qrCode;
 
     const inviteDocs = [];
@@ -98,8 +98,8 @@ exports.sendInvites = async (req, res) => {
         user: existingUser?._id || undefined,
       });
 
-      const link = `https://bloomday.netlify.app/invite/accept/${token}`;
-      const declineLink = `https://bloomday.netlify.app/invite/decline/${token}`;
+      const link = `${process.env.FRONTEND_URL}/invite/accept/${token}`;
+      const declineLink = `${process.env.FRONTEND_URL}/invite/decline/${token}`;
 
       await sendEmail({
         to: email,
@@ -152,7 +152,7 @@ exports.sendInvitess = async (req, res) => {
     const event = await Event.findById(eventId);
     if (!event) return res.status(404).json({ error: 'Event not found.' });
 
-    const eventUrl = `https://bloomday.netlify.app/${event.slug}`;
+    const eventUrl = `${process.env.FRONTEND_URL}/${event.slug}`;
     const qrImageUrl = event.qrCode;
 
     const inviteDocs = [];
@@ -209,8 +209,8 @@ exports.sendInvitess = async (req, res) => {
         expiresAt
       });
 
-      const link = `https://bloomday.netlify.app/invite/accept/${token}`;
-      const declineLink = `https://bloomday.netlify.app/invite/decline/${token}`;
+      const link = `${process.env.FRONTEND_URL}/invite/accept/${token}`;
+      const declineLink = `${process.env.FRONTEND_URL}/invite/decline/${token}`;
 
       await sendEmail({
         to: email,
@@ -265,7 +265,7 @@ exports.sendInvitesss = async (req, res) => {
       if (!event) return res.status(404).json({ error: 'Event not found.' });
       
   
-      const eventUrl = `https://bloomday.netlify.app/${event.slug}`;
+      const eventUrl = `${process.env.FRONTEND_URL}/${event.slug}`;
       const qrImageUrl = event.qrCode;
   
       const inviteDocs = [];
@@ -310,10 +310,10 @@ exports.sendInvitesss = async (req, res) => {
           expiresAt
         });
       
-        //const qrLink = `https://bloomday-dev.netlify.app/invite/view/${token}`; 
+        //const qrLink = `${process.env.FRONTEND_URL}/invite/view/${token}`; 
       
-        const link = `https://bloomday.netlify.app/invite/accept/${token}`;
-        const declineLink = `https://bloomday.netlify.app/invite/decline/${token}`;
+        const link = `${process.env.FRONTEND_URL}/invite/accept/${token}`;
+        const declineLink = `${process.env.FRONTEND_URL}/invite/decline/${token}`;
       
         await sendEmail({
           to: email,

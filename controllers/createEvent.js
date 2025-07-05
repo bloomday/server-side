@@ -39,7 +39,7 @@ exports.createEvent = async (req, res) => {
     //let baseSlug = slugify(name, { lower: true, strict: true });
     const slug = await generateUniqueSlug(baseSlug);
 
-    const eventUrl = `https://bloomday.netlify.app/${slug}`;
+    const eventUrl = `${process.env.FRONTEND_URL}${slug}`;
     // Generate QR Code as a buffer
     const qrBuffer = await QRCode.toBuffer(eventUrl); 
     

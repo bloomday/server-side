@@ -53,8 +53,7 @@ exports.initializePayment = async (req, res) => {
     }
   };
   
-
-exports.verifyPayment = async (req, res) => {
+  exports.verifyPayment = async (req, res) => {
     const { reference } = req.params;
   
     try {
@@ -97,13 +96,14 @@ exports.verifyPayment = async (req, res) => {
       });
   
       res.redirect(
-        `https://bloomday.netlify.app/event-success.html?eventId=${event._id}`
+        `${process.env.FRONTEND_URL}/event-success.html?eventId=${event._id}`
       );
     } catch (err) {
       console.error(err?.response?.data || err);
       res.status(500).json({ error: "Payment verification failed" });
     }
   };
+  
   
 
 exports.paystackWebhook = async (req, res) => {
