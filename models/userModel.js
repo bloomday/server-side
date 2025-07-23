@@ -6,6 +6,13 @@ const userSchema = new mongoose.Schema(
     name: String,
     email: { type: String, unique: true, lowercase: true },
     password: { type: String },
+//     subaccountCode: { type: String },
+// bankInfo: {
+//   accountNumber: String,
+//   bankCode: String,
+//   accountName: String,
+// },
+
     blacklist:{
       type: Array,
       default:[]

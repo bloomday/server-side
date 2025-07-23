@@ -97,6 +97,77 @@ exports.createEvent = async (req, res) => {
   }
 };
 
+exports.createEventsWithSubAccount = async (req, res) => {
+  try {
+    const { name, description, date, location, coHostId, allowCrowdfunding, visibility } = req.body;
+
+    const userId = req.user._id;
+    const hosts = [userId];
+    if (coHostId) hosts.push(coHostId);
+
+    if (!name || typeof name !== 'string') {
+      return res.status(400).json({ message: 'Event name is required and must be a string' });
+    }
+
+    // 💡 Ensure crowdfunding hosts have payout info (basic validation — expand later)
+    if (allowCrowdfunding) {
+      const mainHost = await User.findById(userId);
+      if (!mainHost?.subaccountCode) {
+        return res.status(400).json({ message: 'Crowdfunding not enabled. Please complete your payout setup.' });
+      }
+    }
+
+    const baseSlug = slugify(name, { lower: true, strict: true });
+    const slug = await generateUniqueSlug(baseSlug);
+
+    const eventUrl = `${process.env.FRONTEND_URL}/${slug}`;
+    const qrBuffer = await QRCode.toBuffer(eventUrl);
+
+    const tmpFile = tmp.fileSync({ postfix: ".png" });
+    fs.writeFileSync(tmpFile.name, qrBuffer);
+
+    const qrUpload = await cloudinary.uploader.upload(tmpFile.name, {
+      folder: "bloomday/qrcodes",
+      public_id: `qr-${slug}`,
+    });
+
+    tmpFile.removeCallback();
+    const qrCode = qrUpload.secure_url;
+
+    let ivImagePath = null;
+    if (req.file) {
+      ivImagePath = req.file.path;
+    } else if (req.body.ivImage) {
+      ivImagePath = req.body.ivImage;
+    }
+
+    const event = await Event.create({
+      name,
+      slug,
+      eventUrl,
+      description,
+      date,
+      visibility,
+      location,
+      hosts,
+      allowCrowdfunding: allowCrowdfunding || false,
+      qrCode,
+      ivImage: ivImagePath,
+    });
+
+    res.status(201).json({
+      message: "Event created successfully.",
+      event,
+      eventLink: eventUrl,
+      qrCode,
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Something went wrong while creating event." });
+  }
+};
+
+
 exports.getEventDetails = async (req, res) => {
   try {
     const { eventId } = req.params;
@@ -163,6 +234,84 @@ exports.getEventDetails = async (req, res) => {
     res.status(500).json({ error: 'Something went wrong while fetching event details.' });
   }
 };
+//One view per user
+exports.getEventDetailss = async (req, res) => {
+  try {
+    const { eventId } = req.params;
+    const token = req.query.token;
+
+    const event = await Event.findById(eventId)
+      .populate("hosts", "name email")
+      .populate("contributions.user", "name");
+
+    if (!event) {
+      return res.status(404).json({ error: 'Event not found' });
+    }
+
+    let canView = false;
+
+    if (event.visibility === 'public') {
+      canView = true;
+    } else {
+      const isHost = req.user && event.hosts.some(
+        hostId => hostId.toString() === req.user._id.toString()
+      );
+
+      const isInvitedUser = req.user && await Invite.exists({
+        event: event._id,
+        email: req.user.email,
+        revoked: false,
+        expiresAt: { $gt: new Date() }
+      });
+
+      const isGuestViaToken = token && await Invite.exists({
+        event: event._id,
+        token,
+        revoked: false,
+        expiresAt: { $gt: new Date() }
+      });
+
+      if (isHost || isInvitedUser || isGuestViaToken) {
+        canView = true;
+      }
+    }
+
+    if (!canView) {
+      return res.status(403).json({ message: "You don't have access to this private event." });
+    }
+
+    // Count view only once per user or guest token
+    const userId = req.user?._id?.toString();
+    const tokenOrUser = userId || token;
+
+    const hasViewed =
+      (userId && event.viewedBy?.some(id => id.toString() === userId)) ||
+      (!userId && token && event.guestViews?.includes(token));
+
+    if (!hasViewed) {
+      event.views = (event.views || 0) + 1;
+
+      if (userId) {
+        event.viewedBy = event.viewedBy || [];
+        event.viewedBy.push(req.user._id);
+      } else if (token) {
+        event.guestViews = event.guestViews || [];
+        event.guestViews.push(token);
+      }
+
+      await event.save();
+    }
+
+    const totalAmount = event.contributions.reduce((sum, c) => sum + c.amount, 0);
+
+    res.json({ event, totalAmount });
+
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Something went wrong while fetching event details.' });
+  }
+};
+
 
 
 exports.getEventDetailss = async (req, res) => {

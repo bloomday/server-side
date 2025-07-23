@@ -32,6 +32,7 @@ exports.signup = async (req, res) => {
         email,
         password,
         provider: 'local',
+        //subaccountCode: null,
         verificationToken,
         verificationExpires: Date.now() + 24 * 60 * 60 * 1000
       });
@@ -55,43 +56,6 @@ exports.signup = async (req, res) => {
     }
   };
   
-exports.signups = async (req, res) => {
-  try {
-    const { error } = signupSchema.validate(req.body);
-    if (error) return res.status(400).json({ message: error.details[0].message });
-
-    const { name, email, password } = req.body;
-    const existing = await User.findOne({ email });
-    if (existing) return res.status(400).json({ message: 'Email already exists' });
-
-    const verificationToken = crypto.randomBytes(32).toString('hex');
-    const user = await User.create({
-      name,
-      email,
-      password,
-      provider: 'local',
-      verificationToken,
-      verificationExpires: Date.now() + 24 * 60 * 60 * 1000
-
-    });
-
-    // await sendMail({
-    //   to: user.email,
-    //   subject: 'Verify your email',
-    //   html: `<p>Click <a href="http://localhost:3000/verify-email?token=${verificationToken}">here</a> to verify your email.</p>`,
-    // });
-         await sendVerificationEmail(user.email, verificationToken, 'verify');
-         return res.status(201).json({ 
-          message: 'Verification email sent. Please check your inbox and spam folder to verify your email.',
-          data: user 
-        });        
-    
-  } catch (err) {
-    console.error('Signup error:', err); 
-    res.status(500).json({ 
-      message: 'Something went wrong during signup' });
-  }
-};
 
 exports.verifyEmail = async (req, res) => {
   try {

@@ -48,7 +48,13 @@ const eventSchema = new mongoose.Schema({
     },
   ],
   views: { type: Number, default: 0 },
-  
+viewedBy: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
+guestViews: [String], // optional, for guest tokens
+
+  summaryReportSent: {
+    type: Boolean,
+    default: false,
+  }  
 },
 { timestamps: true });
 
