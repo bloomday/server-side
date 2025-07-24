@@ -153,7 +153,7 @@ exports.verifyPayment = async (req, res) => {
       });
   
       res.redirect(
-        `${process.env.FRONTEND_URL}/event-success.html?eventId=${event._id}`
+        `${process.env.FRONTEND_URL}/payment-success?eventId=${event._id}`
       );
     } catch (err) {
       console.error(err?.response?.data || err);
