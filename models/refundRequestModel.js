@@ -1,5 +1,3 @@
-// models/refundRequestModel.js
-
 const mongoose = require('mongoose');
 
 const refundRequestSchema = new mongoose.Schema({

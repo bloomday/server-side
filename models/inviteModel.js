@@ -33,7 +33,7 @@ const inviteSchema = new mongoose.Schema({
     type: Boolean,
     default: false,
   },  
-  token: String, // unique token for the invite link
+  token: String, 
   status: {
     type: String,
     enum: ['pending', 'accepted', 'declined'],

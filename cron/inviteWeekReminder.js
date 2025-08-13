@@ -39,6 +39,9 @@ const sendReminder = async (invites, type) => {
     if (type === 'oneWeek') invite.reminderOneWeekSent = true;
 
     await invite.save();
+
+     // Throttle emails to avoid rate limits
+     await new Promise(res => setTimeout(res, 1000));
   }
 };
 
@@ -94,6 +97,84 @@ const runEventReminders = async () => {
     console.error(`[${new Date().toISOString()}] ❌ Reminder error: ${err.message}`);
   }
 };
+
+const runEventReminderss = async () => {
+  try {
+    const now = new Date();
+
+    // Function to get date ranges between today and target days ahead
+    const getDateRange = (daysAhead) => {
+      const start = new Date(
+        now.getFullYear(),
+        now.getMonth(),
+        now.getDate() + daysAhead
+      );
+      start.setHours(0, 0, 0, 0);
+
+      const end = new Date(
+        now.getFullYear(),
+        now.getMonth(),
+        now.getDate() + daysAhead
+      );
+      end.setHours(23, 59, 59, 999);
+
+      return { start, end };
+    };
+
+    // Get ranges
+    const { start: twoWeeksStart, end: twoWeeksEnd } = getDateRange(14);
+    const { start: oneWeekStart, end: oneWeekEnd } = getDateRange(7);
+
+    // ✅ TWO WEEKS REMINDER — Catch-up logic
+    const twoWeekInvites = await Invite.find({
+      reminderTwoWeeksSent: false, // not sent yet
+      revoked: false,
+      status: 'accepted',
+    }).populate({
+      path: 'event',
+      match: {
+        date: { $gte: twoWeeksStart, $lte: twoWeeksEnd }, // matches exact date
+      },
+    });
+
+    const filteredTwoWeek = twoWeekInvites.filter(invite => invite.event);
+    if (filteredTwoWeek.length > 0) {
+      console.log(`📨 Sending ${filteredTwoWeek.length} two-week reminders...`);
+      await sendReminder(filteredTwoWeek, 'twoWeeks');
+    } else {
+      console.log('ℹ No two-week reminders to send today.');
+    }
+
+    // ✅ ONE WEEK REMINDER — Catch-up logic
+    const oneWeekInvites = await Invite.find({
+      reminderOneWeekSent: false, // not sent yet
+      revoked: false,
+      status: 'accepted',
+    }).populate({
+      path: 'event',
+      match: {
+        date: { $gte: oneWeekStart, $lte: oneWeekEnd }, // matches exact date
+      },
+    });
+
+    const filteredOneWeek = oneWeekInvites.filter(invite => invite.event);
+    if (filteredOneWeek.length > 0) {
+      console.log(`📨 Sending ${filteredOneWeek.length} one-week reminders...`);
+      await sendReminder(filteredOneWeek, 'oneWeek');
+    } else {
+      console.log('ℹ No one-week reminders to send today.');
+    }
+
+    console.log(`[${new Date().toISOString()}] ✅ Event reminders run complete.`);
+  } catch (err) {
+    console.error(`[${new Date().toISOString()}] ❌ Reminder error: ${err.message}`);
+  }
+};
+
+
+
+
+
 
 // Schedule every day at 9am
 cron.schedule('0 9 * * *', runEventReminders);
