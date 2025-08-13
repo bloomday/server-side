@@ -422,7 +422,7 @@ exports.getEventQRCodes = async (req, res) => {
 
 exports.getTrendingEvents = async (req, res) => {
   try {
-    const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+    const thirtyDaysAgo = new Date(Date.now() - 60 * 24 * 60 * 60 * 1000);
     const events = await Event.find({visibility: 'public', createdAt: { $gte: thirtyDaysAgo }}).populate("contributions.user", "name").lean();
 
     const trending = events

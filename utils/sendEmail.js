@@ -1,12 +1,4 @@
-// const nodemailer = require("nodemailer");
 
-// const transporter = nodemailer.createTransport({
-//   service: "gmail",
-//   auth: {
-//     user: process.env.GMAIL_USER,
-//     pass: process.env.GMAIL_PASS, 
-//   },
-// });
 
 // const sendMail = async ({ to, subject, html }) => {
 //   try {
@@ -35,6 +27,24 @@ const transporter = nodemailer.createTransport({
   },
 
 });
+
+// const nodemailer = require('nodemailer');
+
+// const transporter = nodemailer.createTransport({
+//   service: 'gmail',
+//   auth: {
+//     user: process.env.GMAIL_USER,
+//     pass: process.env.GMAIL_PASS, // This should be an App Password, not your main Gmail password
+//   },
+//   pool: true,           // keep connection alive
+//   maxConnections: 1,    // single connection
+//   maxMessages: 50,      // refresh after sending 50 messages
+//   rateLimit: 5,         // send at most 5 per second
+//   tls: {
+//     rejectUnauthorized: false, // needed only if self-signed
+//   }
+// });
+
 
 
 

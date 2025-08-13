@@ -13,7 +13,7 @@ const eventSchema = new mongoose.Schema({
     required: true,
   },
   eventUrl: { type: String, unique: true },
-  qrCode: { type: String }, // base64 image
+  qrCode: { type: String }, 
 
   allowCrowdfunding: { type: Boolean, default: false },
 
@@ -22,8 +22,8 @@ const eventSchema = new mongoose.Schema({
   gallery: [
     {
       url: String,
-      uploadedBy: String, // guest name or user name
-      email: String, // guest email or user email
+      uploadedBy: String, 
+      email: String, 
       uploadedAt: { type: Date, default: Date.now },
     },
   ],
@@ -40,8 +40,8 @@ const eventSchema = new mongoose.Schema({
         ref: "User",
         default: null,
       },
-      name: String, // for guest
-      email: String, // for guest
+      name: String, 
+      email: String, 
       amount:  { type: Number, required: true },
       message: String,
       paidAt:  { type: Date, default: Date.now },
