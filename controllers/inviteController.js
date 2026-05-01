@@ -396,6 +396,64 @@ exports.viewInvitesByEmail = async (req, res) => {
 
 
 
+exports.getInvitedEmails = async (req, res) => {
+  try {
+    const { eventId } = req.params;
+
+    // Populate invitees from Invite collection
+    const event = await Event.findById(eventId)
+      .populate("invitees", "email status") 
+      .lean();
+
+    if (!event) {
+      return res.status(404).json({ message: "Event not found" });
+    }
+
+    // Extract the emails
+    const invitedEmails = event.invitees.map(invite => ({
+      email: invite.email,
+      status: invite.status 
+    }));
+
+    res.json({
+      eventId: event._id,
+      eventName: event.name,
+      invitedEmails
+    });
+  } catch (err) {
+    console.error("Error fetching invited emails:", err);
+    res.status(500).json({ error: "Failed to fetch invited emails" });
+  }
+};
+
+
+
+exports.getInvitedEmailss = async (req, res) => {
+  try {
+    const { eventId } = req.params;
+
+    // find event by ID
+    const event = await Event.findById(eventId).lean();
+
+    if (!event) {
+      return res.status(404).json({ message: "Event not found" });
+    }
+
+    // return list of invited emails
+    res.json({
+      eventId: event._id,
+      eventName: event.name,
+      invitedEmails: event.invitees || []
+    });
+  } catch (err) {
+    console.error("Error fetching invited emails:", err);
+    res.status(500).json({ error: "Failed to fetch invited emails" });
+  }
+};
+
+
+
+
 exports.getAcceptedInvites = async (req, res) => {
   try {
     const { eventId } = req.params;
